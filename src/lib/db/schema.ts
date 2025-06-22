@@ -12,6 +12,8 @@ export const chats = pgTable('chats', {
   fileKey: text('fileKey').notNull(),
 });
 
+export type DrizzleChat=typeof chats.$inferInsert
+
 export const messages = pgTable('messages', {
   id: serial('id').primaryKey(),
   chatId: integer('chat_id').notNull().references(() => chats.id),

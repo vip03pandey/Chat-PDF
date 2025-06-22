@@ -16,7 +16,7 @@ export async function uploadToS3(file: File) {
     }
     return {
       file_key: data.fileKey,
-      file_name: file.name, // Map file.name instead of url
+      file_name: file.name, 
     };
   } catch (error) {
     console.error('uploadToS3 error:', error);
