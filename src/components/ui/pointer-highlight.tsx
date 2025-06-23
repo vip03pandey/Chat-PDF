@@ -1,6 +1,6 @@
 "use client";
 import { cn } from "@/lib/utils";
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 
 export function PointerHighlight({
@@ -49,11 +49,11 @@ export function PointerHighlight({
       {children}
       {dimensions.width > 0 && dimensions.height > 0 && (
         <motion.div
-          className="pointer-events-none absolute inset-0 z-0"
-          initial={{ opacity: 0, scale: 0.95, originX: 0, originY: 0 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-        >
+        className="pointer-events-none absolute inset-0 z-0"
+        initial={{ opacity: 0, scale: 0.95 }} 
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+      >
           <motion.div
             className={cn(
               "absolute inset-0 border border-neutral-800 dark:border-neutral-200",
