@@ -1,44 +1,37 @@
-import { auth } from '@clerk/nextjs/server'
-import { redirect } from 'next/navigation'
-import React from 'react'
-import { db } from '@/lib/db'
-import { chats } from '@/lib/db/schema'
-import { eq } from 'drizzle-orm'
-import ResponsiveChatLayout from '@/components/ResponsiveChatLayout'
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+import { db } from '@/lib/db';
+import { chats } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
+import { type NextPage } from 'next';
+import ResponsiveChatLayout from '@/components/ResponsiveChatLayout';
 
-type Props = {
-  params: {
-    chatId: string
-  }
+// Define the props type correctly
+interface ChatPageProps {
+  params: Promise<{ chatId: string }>;
 }
 
-const ChatPage = async (props: Props) => {
-  const { chatId } = props.params;
-  const { userId } = await auth()
-  
-  if (!userId) {
-    return redirect('/sign-in')
-  }
-  
-  const _chats = await db.select().from(chats).where(eq(chats.userId, userId))
-  
-  if (!_chats.length) {
-    return redirect('/')
-  }
-  
-  if (!_chats.find(chat => chat.id === parseInt(chatId))) {
-    return redirect(`/`);
-  }
+const ChatPage: NextPage<ChatPageProps> = async ({ params }) => {
+  // Await the params since it's a Promise
+  const { chatId } = await params;
+  const numericChatId = parseInt(chatId);
 
-  const currentChat = _chats.find(chat => chat.id === parseInt(chatId));
-  
+  const { userId } = await auth();
+  if (!userId) return redirect('/sign-in');
+
+  const _chats = await db.select().from(chats).where(eq(chats.userId, userId));
+  if (!_chats.length) return redirect('/');
+
+  const currentChat = _chats.find(chat => chat.id === numericChatId);
+  if (!currentChat) return redirect('/');
+
   return (
     <ResponsiveChatLayout
       chats={_chats}
-      chatId={parseInt(chatId)}
+      chatId={numericChatId}
       currentChat={currentChat}
     />
-  )
-}
+  );
+};
 
-export default ChatPage
+export default ChatPage;
