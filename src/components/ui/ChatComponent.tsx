@@ -1,19 +1,30 @@
 "use client"
 import React, { useEffect, useRef } from 'react'
 import { Input } from './input'
-import { useChat } from '@ai-sdk/react';
+import { Message, useChat } from '@ai-sdk/react';
 import { Button } from './button';
 import { Send } from 'lucide-react';
 import MessageList from './MessageList';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 
 type Props={chatId:number}
 
 const ChatComponent = ({chatId}:Props) => {
+  const { data } = useQuery({
+    queryKey: ["chat", chatId],
+    queryFn: async () => {
+      const res = await axios.post<{ messages: Message[] }>("/api/get-messages", { chatId });
+      return res.data.messages;
+    }
+  });
+  
   const {input,handleInputChange,handleSubmit,messages}=useChat({
     api:"/api/chat",
     body:{
       chatId
-    }
+    },
+    initialMessages: data || []
   })
   const messagesEndRef = useRef<HTMLDivElement>(null)
   useEffect(() => {

@@ -13,7 +13,7 @@ type Props = {
 export const SidebarContent = ({ chats, chatId, setNavDrawerOpen }: Props) => (
     <>
       <Link className="flex" href="/">
-        <Button className="w-[60%] !m-auto !mt-8 border-white border bg-[#1e272e] !text-white-200">
+        <Button className="w-[60%] !m-auto !mt-14 border-white border bg-[#1e272e] !text-white-200">
           <PlusCircle className="mr-2 w-4 h-4" />
           New Chat
         </Button>
