@@ -3,8 +3,14 @@ import React from "react";
 import { Button } from "./button";
 import { MessageCircle, PlusCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DrizzleChat } from "@/lib/db/schema";
+type Props = {
+  chats: DrizzleChat[];
+  chatId: number;
+  setNavDrawerOpen: (isOpen: boolean) => void;
+};
   
-export const SidebarContent = ({ chats, chatId}) => (
+export const SidebarContent = ({ chats, chatId, setNavDrawerOpen }: Props) => (
     <>
       <Link className="flex" href="/">
         <Button className="w-[60%] !m-auto !mt-8 border-white border bg-[#1e272e] !text-white-200">
@@ -25,7 +31,7 @@ export const SidebarContent = ({ chats, chatId}) => (
             <Link key={chat.id} href={`/chat/${chat.id}`} onClick={() => setNavDrawerOpen(false)}>
               <div
                 className={cn(
-                  "rounded-lg p-3 text-slate-300 flex items-center !mb-1",
+                  "rounded-lg !p-3 text-slate-300 flex items-center !mb-1",
                   {
                     "bg-blue-600 text-white": chat.id === chatId,
                     "hover:text-white": chat.id !== chatId,
@@ -40,6 +46,8 @@ export const SidebarContent = ({ chats, chatId}) => (
             </Link>
           ))}
       </div>
+
+
     </>
   );
   

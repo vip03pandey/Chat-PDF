@@ -5,6 +5,9 @@ import { db } from '@/lib/db'
 import { chats } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import ChatSideBar from '@/components/ui/ChatSideBar'
+import PDFViewer from '@/components/ui/PDFViewer'
+import ChatComponent from '@/components/ui/ChatComponent'
+
 type Props={
     params:{
         chatId:string
@@ -23,26 +26,29 @@ const ChatPage = async (props:Props) => {
   if (!_chats.find(chat => chat.id === parseInt(chatId))) {
     return redirect(`/`);
   }
+
+  const currentChat = _chats.find(chat => chat.id === parseInt(chatId));
   
   return (
-    <div className='flex max-h-screen overflow-scroll'>
-      <div className="flex h-screen">
-    {/* Sidebar */}
-    <div className="w-[300px] h-full ">
-      <ChatSideBar chats={_chats} chatId={parseInt(chatId)} />
-    </div>
+    <div className='flex h-screen overflow-hidden'>
+      <div className="flex w-full h-full">
+        {/* Sidebar */}
+        <div className="w-70 h-full overflow-y-auto flex-shrink-0">
+          <ChatSideBar chats={_chats} chatId={parseInt(chatId)} />
+        </div>
 
-      {/* Viewer */}
-      <div className="flex-[5] p-4 overflow-auto">
-        {/* <PDFViewer /> */}
-      </div>
+        {/* Viewer */}
+        <div className="w-120 border-l-4 border-l-slate-200 h-full flex flex-col flex-shrink-0">
+          <ChatComponent chatId={parseInt(chatId)}/>
+        </div>
+
+        <div className="flex-1 h-full overflow-y-auto">
+          <PDFViewer pdf_url={currentChat?.pdfUrl || ''} />
+        </div>
 
         {/* Chat */}
-        <div className="flex-[3] border-l border-gray-300 overflow-auto">
-          {/* <ChatComponent /> */}
-        </div>
+        
       </div>
-      
     </div>
   )
 }

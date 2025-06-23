@@ -37,10 +37,8 @@ type PDFPage={
 
 export async function loadS3IntoPinecone(fileKey: string) {
   try {
-    console.log('downloading from s3 into file system');
     const file_name = await downloadFromS3(fileKey);
     if (!file_name) {
-      console.log('file_name is null');
       throw new Error('Failed to download file from S3');
     }
 
