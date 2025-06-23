@@ -5,13 +5,15 @@ import { PointerHighlight } from "@/components/ui/pointer-highlight";
 import { db } from "@/lib/db";
 import { chats } from "@/lib/db/schema";
 import { desc, eq } from "drizzle-orm";
-export function ButtonDemo() {
-  return (
-    <div className="flex flex-wrap items-center gap-2 md:flex-row">
-      <Button>Button</Button>
-    </div>
-  )
-}
+
+
+// export function ButtonDemo() {
+//   return (
+//     <div className="flex flex-wrap items-center gap-2 md:flex-row">
+//       <Button>Button</Button>
+//     </div>
+//   )
+// }
 
 import { UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
