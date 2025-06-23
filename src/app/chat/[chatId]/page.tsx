@@ -12,7 +12,6 @@ interface ChatPageProps {
 }
 
 const ChatPage: NextPage<ChatPageProps> = async ({ params }) => {
-  // Await the params since it's a Promise
   const { chatId } = await params;
   const numericChatId = parseInt(chatId);
 

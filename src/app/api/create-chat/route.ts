@@ -4,6 +4,11 @@ import { db } from '@/lib/db';
 import { auth } from '@clerk/nextjs/server';
 import { chats } from '@/lib/db/schema'; // ensure this is defined
 
+
+export async function GET() {
+  return NextResponse.json({ error: "GET not supported" }, { status: 405 });
+}
+
 export async function POST(req: Request) {
   const { userId } = await auth();
 

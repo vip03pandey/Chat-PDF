@@ -13,6 +13,10 @@ export const runtime = "nodejs";
 
 const model = AIModel("gpt-3.5-turbo");
 
+export async function GET() {
+  return NextResponse.json({ error: "GET not supported" }, { status: 405 });
+}
+
 export async function POST(req: Request) {
   try {
     const { messages, chatId } = await req.json();
