@@ -2,7 +2,9 @@ import FileUpload from "@/components/FileUpload";
 import { AuroraBackground } from "@/components/ui/aurora-background";
 import { Button } from "@/components/ui/button"
 import { PointerHighlight } from "@/components/ui/pointer-highlight";
-
+import { db } from "@/lib/db";
+import { chats } from "@/lib/db/schema";
+import { desc, eq } from "drizzle-orm";
 export function ButtonDemo() {
   return (
     <div className="flex flex-wrap items-center gap-2 md:flex-row">
@@ -19,6 +21,18 @@ import Link from "next/link";
 export default async function Home(){
   const {userId} = await auth()
   const isAuth= !!userId
+  let recentChatId: number | null = null;
+
+  if (isAuth) {
+  const recentChat = await db
+    .select()
+    .from(chats)
+    .where(eq(chats.userId, userId))
+    .orderBy(desc(chats.createdAt)) // Make sure you have createdAt column
+    .limit(1);
+
+  recentChatId = recentChat[0]?.id || null;
+}
   return (
 <AuroraBackground>
   <div className="z-10 pointer-events-auto px-4 md:px-16 py-8">
@@ -39,7 +53,12 @@ export default async function Home(){
       </div>
 
       <div className="!flex !mt-4">
-        {isAuth && <Button className="!px-3 !py-2">Go to Chat</Button>}
+      {isAuth && recentChatId && (
+  <Link href={`/chat/${recentChatId}`}>
+    <Button className="!px-3 !py-2">Go to Chat</Button>
+  </Link>
+)}
+
       </div>
 
       <p className="max-w-xl !mt-1 text-lg text-slate-600">
