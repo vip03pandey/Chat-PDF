@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse,NextRequest } from 'next/server';
 import { loadS3IntoPinecone } from '@/lib/pinecone';
 import { db } from '@/lib/db';
 import { auth } from '@clerk/nextjs/server';
@@ -9,7 +9,7 @@ export async function GET() {
   return NextResponse.json({ error: "GET not supported" }, { status: 405 });
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const { userId } = await auth();
 
   if (!userId) {

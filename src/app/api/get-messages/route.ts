@@ -1,11 +1,11 @@
 import { db } from '@/lib/db';
 import { messages } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
-import { NextResponse } from 'next/server';
+import { NextResponse,NextRequest } from 'next/server';
 
 export const runtime = 'nodejs';
 
-export const POST = async (req: Request) => {
+export const POST = async (req: NextRequest) => {
   try {
     const { chatId } = await req.json();
 

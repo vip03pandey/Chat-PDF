@@ -7,7 +7,7 @@ import { getContext } from "@/lib/context";
 import { db } from "@/lib/db";
 import { chats, messages as _messages } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs"; 
 
@@ -17,7 +17,7 @@ export async function GET() {
   return NextResponse.json({ error: "GET not supported" }, { status: 405 });
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const { messages, chatId } = await req.json();
 

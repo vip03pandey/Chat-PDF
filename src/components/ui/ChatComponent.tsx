@@ -22,9 +22,13 @@ const ChatComponent = ({chatId}:Props) => {
   const {input,handleInputChange,handleSubmit,messages}=useChat({
     api:"/api/chat",
     body:{
-      chatId
+      chatId,
     },
-    initialMessages: data || []
+    initialMessages: data || [],
+    experimental_prepareRequestBody: ({ messages }) => ({
+      chatId,
+      messages,
+    }),
   })
   const messagesEndRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
