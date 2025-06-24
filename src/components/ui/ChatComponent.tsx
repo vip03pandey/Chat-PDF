@@ -19,12 +19,31 @@ const ChatComponent = ({chatId}:Props) => {
     }
   });
   
-  const {input,handleInputChange,handleSubmit,messages}=useChat({
-    api:"/api/chat",
-    body:{
+  const {input, handleInputChange, handleSubmit, messages, error, isLoading} = useChat({
+    api: "/api/chat",
+    body: {
       chatId,
     },
     initialMessages: data || [],
+    onError: (error) => {
+      console.error("useChat error:", error);
+      console.error("Error details:", {
+        message: error.message,
+        cause: error.cause,
+        stack: error.stack
+      });
+    },
+    onResponse: (response) => {
+      console.log("Response received:", {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        url: response.url
+      });
+    },
+    onFinish: (message) => {
+      console.log("Chat finished:", message);
+    }
   })
   const messagesEndRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
