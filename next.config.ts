@@ -5,15 +5,6 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['pdf-parse', 'pdf2pic'],
   },
-  // Ensure API routes work properly
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: '/api/:path*',
-      },
-    ];
-  },
   // Handle streaming responses
   async headers() {
     return [
