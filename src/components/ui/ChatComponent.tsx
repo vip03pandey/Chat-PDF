@@ -24,6 +24,9 @@ const ChatComponent = ({chatId}:Props) => {
     body: {
       chatId,
     },
+    headers: {
+      "Content-Type": "application/json"
+    },
     initialMessages: data || [],
     onError: (error) => {
       console.error("useChat error:", error);

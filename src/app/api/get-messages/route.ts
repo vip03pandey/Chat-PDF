@@ -24,7 +24,3 @@ export const POST = async (req: NextRequest) => {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 };
-
-export const GET = () => {
-  return NextResponse.json({ error: 'GET not supported' }, { status: 405 });
-};
