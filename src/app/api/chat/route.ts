@@ -74,7 +74,6 @@ export async function POST(req: NextRequest) {
       role: "user",
     });
 
-    // Prepare messages for AI - only include user messages + system prompt
     const streamMessages = [
       systemPrompt, 
       ...messages.filter((msg: any) => msg.role === "user" || msg.role === "assistant")
@@ -104,9 +103,4 @@ export async function POST(req: NextRequest) {
       error: "Internal server error", 
     }, { status: 500 });
   }
-}
-
-// Make sure GET is handled properly
-export async function GET() {
-  return Response.json({ error: "GET method not supported" }, { status: 405 });
 }
