@@ -1,38 +1,52 @@
-
-
-
 import { streamText } from "ai";
-import {  openai as AIModel} from "@ai-sdk/openai";
+import { openai as AIModel } from "@ai-sdk/openai";
 import { getContext } from "@/lib/context";
 import { db } from "@/lib/db";
 import { chats, messages as _messages } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
-export const runtime = "nodejs"; 
+export const runtime = "nodejs";
 
 const model = AIModel("gpt-3.5-turbo");
 
-export async function GET() {
-  return NextResponse.json({ error: "GET not supported" }, { status: 405 });
-}
-
 export async function POST(req: NextRequest) {
   try {
-    const { messages, chatId } = await req.json();
-    console.log("Received data:", { messages: messages?.length, chatId });
+    console.log("=== Chat API Called ===");
+    console.log("Method:", req.method);
+    console.log("Headers:", Object.fromEntries(req.headers.entries()));
+    
+    const body = await req.json();
+    console.log("Request body:", JSON.stringify(body, null, 2));
+    const { messages, chatId } = body;
+
+    if (!messages || !chatId) {
+      console.log("Missing required fields:", { 
+        hasMessages: !!messages, 
+        hasChatId: !!chatId,
+        bodyKeys: Object.keys(body)
+      });
+      return Response.json({ error: "Missing messages or chatId" }, { status: 400 });
+    }
+
+    console.log("Processing chat for chatId:", chatId);
+    console.log("Messages count:", messages.length);
+
     const _chats = await db.select().from(chats).where(eq(chats.id, chatId));
     if (_chats.length !== 1) {
-      return NextResponse.json({ error: "Chat not found" }, { status: 404 });
+      console.log("Chat not found for ID:", chatId);
+      return Response.json({ error: "Chat not found" }, { status: 404 });
     }
 
     const fileKey = _chats[0].fileKey;
     const lastMessage = messages[messages.length - 1];
 
     if (!lastMessage?.content) {
-      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+      console.log("Invalid last message:", lastMessage);
+      return Response.json({ error: "Invalid input" }, { status: 400 });
     }
 
+    console.log("Getting context for:", lastMessage.content.substring(0, 100));
     const context = await getContext(lastMessage.content, fileKey);
 
     const systemPrompt = {
@@ -53,29 +67,46 @@ export async function POST(req: NextRequest) {
     };
 
     // Save user message
+    console.log("Saving user message to database");
     await db.insert(_messages).values({
       chatId,
       content: lastMessage.content,
       role: "user",
     });
 
-    const streamMessages = [systemPrompt, ...messages.filter((msg: any) => msg.role === "user")];
+    // Prepare messages for AI - only include user messages + system prompt
+    const streamMessages = [
+      systemPrompt, 
+      ...messages.filter((msg: any) => msg.role === "user" || msg.role === "assistant")
+    ];
+
+    console.log("Starting AI stream with messages:", streamMessages.length);
 
     const result = await streamText({
       model: model,
       messages: streamMessages,
       onFinish: async (completion) => {
+        console.log("AI response completed, saving to database");
         await db.insert(_messages).values({
           chatId,
           content: completion.text,
-          role: "system",
+          role: "system", // Change from "system" to "assistant"
         });
       },
     });
 
+    console.log("Returning streaming response");
     return result.toDataStreamResponse();
+
   } catch (error) {
     console.error("Error in chat API:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return Response.json({ 
+      error: "Internal server error", 
+    }, { status: 500 });
   }
+}
+
+// Make sure GET is handled properly
+export async function GET() {
+  return Response.json({ error: "GET method not supported" }, { status: 405 });
 }
