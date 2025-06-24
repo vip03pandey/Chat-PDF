@@ -2,10 +2,15 @@ import { db } from '@/lib/db';
 import { messages } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { NextResponse,NextRequest } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
 
 export const runtime = 'nodejs';
 
 export const POST = async (req: NextRequest) => {
+  const { userId } = await auth();
+  if (!userId) {
+    return new Response("unauthorized", { status: 401 });
+  }
   try {
     const { chatId } = await req.json();
 

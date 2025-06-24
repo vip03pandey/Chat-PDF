@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import AWS from 'aws-sdk'
+import { auth } from '@clerk/nextjs/server';
 
 export async function POST(req: NextRequest) {
+  const { userId } = await auth();
+  if (!userId) {
+    return new Response("unauthorized", { status: 401 });
+  }
   const formData = await req.formData()
   const file = formData.get('file') as File
 
