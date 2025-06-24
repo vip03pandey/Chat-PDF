@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  productionBrowserSourceMaps: true, // Enable source maps in production
-};
+  reactStrictMode: true,
+  swcMinify: true,
+}
+
 module.exports = nextConfig;
