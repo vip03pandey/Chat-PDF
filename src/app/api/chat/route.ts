@@ -20,7 +20,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const { messages, chatId } = await req.json();
-
+    console.log("Received data:", { messages: messages?.length, chatId });
     const _chats = await db.select().from(chats).where(eq(chats.id, chatId));
     if (_chats.length !== 1) {
       return NextResponse.json({ error: "Chat not found" }, { status: 404 });

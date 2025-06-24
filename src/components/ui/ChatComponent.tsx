@@ -25,10 +25,6 @@ const ChatComponent = ({chatId}:Props) => {
       chatId,
     },
     initialMessages: data || [],
-    experimental_prepareRequestBody: ({ messages }) => ({
-      chatId,
-      messages,
-    }),
   })
   const messagesEndRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
