@@ -1,3 +1,4 @@
+import { auth } from "@clerk/nextjs/server";
 import { streamText } from "ai";
 import { openai as AIModel } from "@ai-sdk/openai";
 import { getContext } from "@/lib/context";
@@ -11,10 +12,12 @@ export const runtime = "nodejs";
 const model = AIModel("gpt-3.5-turbo");
 
 export async function POST(req: NextRequest) {
-  if (req.method !== "POST") {
-    return new Response("Method Not Allowed--Mat kar", { status: 405 });
-  }
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return new Response("unauthorized", { status: 401 });
+    }
+
     console.log("=== Chat API Called ===");
     console.log("Method:", req.method);
     console.log("Headers:", Object.fromEntries(req.headers.entries()));
@@ -92,7 +95,7 @@ export async function POST(req: NextRequest) {
         await db.insert(_messages).values({
           chatId,
           content: completion.text,
-          role: "assistant",
+          role: "system",
         });
       },
     });
