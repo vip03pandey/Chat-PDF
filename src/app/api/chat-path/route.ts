@@ -8,105 +8,156 @@ import { eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
 
 export const runtime = "nodejs";
+export const dynamic = 'force-dynamic';
 
 const model = AIModel("gpt-3.5-turbo");
 
 export async function POST(req: NextRequest) {
   try {
+    // Authenticate user
     const { userId } = await auth();
     if (!userId) {
-      return new Response("unauthorized", { status: 401 });
+      console.error("Unauthorized access attempt");
+      return new Response("Unauthorized", { status: 401 });
     }
 
-    console.log("=== Chat API Called ===");
-    console.log("Method:", req.method);
-    console.log("Headers:", Object.fromEntries(req.headers.entries()));
+    console.log("=== New Streaming Chat API Called ===");
+    console.log("User ID:", userId);
     
+    // Parse request body
     const body = await req.json();
-    console.log("Request body:", JSON.stringify(body, null, 2));
-    const { messages, chatId } = body;
-
-    if (!messages || !chatId) {
-      console.log("Missing required fields:", { 
-        hasMessages: !!messages, 
-        hasChatId: !!chatId,
-        bodyKeys: Object.keys(body)
-      });
-      return Response.json({ error: "Missing messages or chatId" }, { status: 400 });
-    }
-
-    console.log("Processing chat for chatId:", chatId);
-    console.log("Messages count:", messages.length);
-
-    const _chats = await db.select().from(chats).where(eq(chats.id, chatId));
-    if (_chats.length !== 1) {
-      console.log("Chat not found for ID:", chatId);
-      return Response.json({ error: "Chat not found" }, { status: 404 });
-    }
-
-    const fileKey = _chats[0].fileKey;
-    const lastMessage = messages[messages.length - 1];
-
-    if (!lastMessage?.content) {
-      console.log("Invalid last message:", lastMessage);
-      return Response.json({ error: "Invalid input" }, { status: 400 });
-    }
-
-    console.log("Getting context for:", lastMessage.content.substring(0, 100));
-    const context = await getContext(lastMessage.content, fileKey);
-
-    const systemPrompt = {
-      role: "system",
-      content: `AI assistant is a brand new, powerful, human-like artificial intelligence.
-                The traits of AI include expert knowledge, helpfulness, cleverness, and articulateness.
-                AI is a well-behaved and well-mannered individual.
-                AI is always friendly, kind, and inspiring, and he is eager to provide vivid and thoughtful responses to the user.
-                AI has the sum of all knowledge in their brain, and is able to accurately answer nearly any question about any topic in conversation.
-                AI assistant is a big fan of Pinecone and Vercel.
-                START CONTEXT BLOCK
-                ${context}
-                END OF CONTEXT BLOCK
-                AI assistant will take into account any CONTEXT BLOCK that is provided in a conversation.
-                If the context does not provide the answer to question, the AI assistant will say, "I'm sorry, but I don't know the answer to that question".
-                AI assistant will not apologize for previous responses, but instead will indicate new information was gained.
-                AI assistant will not invent anything that is not drawn directly from the context.`,
-    };
-
-    // Save user message
-    console.log("Saving user message to database");
-    await db.insert(_messages).values({
-      chatId,
-      content: lastMessage.content,
-      role: "user",
+    console.log("Request body received:", {
+      hasChatId: !!body.chatId,
+      hasMessages: !!body.messages,
+      messagesLength: body.messages?.length || 0
     });
 
-    const streamMessages = [
-      systemPrompt, 
-      ...messages.filter((msg: any) => msg.role === "user" || msg.role === "assistant")
+    const { messages, chatId } = body;
+
+    // Validate required fields
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      console.error("Invalid or missing messages array");
+      return new Response("Invalid messages array", { status: 400 });
+    }
+
+    if (!chatId) {
+      console.error("Missing chatId");
+      return new Response("Missing chatId", { status: 400 });
+    }
+
+    // Verify chat exists and belongs to user
+    const chatQuery = await db
+      .select()
+      .from(chats)
+      .where(eq(chats.id, chatId));
+
+    if (chatQuery.length === 0) {
+      console.error("Chat not found:", chatId);
+      return new Response("Chat not found", { status: 404 });
+    }
+
+    const chat = chatQuery[0];
+    console.log("Chat found:", { id: chat.id, fileKey: chat.fileKey });
+
+    // Get the last user message
+    const lastMessage = messages[messages.length - 1];
+    if (!lastMessage?.content || lastMessage.role !== "user") {
+      console.error("Invalid last message:", lastMessage);
+      return new Response("Last message must be from user with content", { status: 400 });
+    }
+
+    console.log("Processing message:", lastMessage.content.substring(0, 100) + "...");
+
+    // Get context from the document
+    let context = "";
+    try {
+      if (chat.fileKey) {
+        context = await getContext(lastMessage.content, chat.fileKey);
+        console.log("Context retrieved, length:", context.length);
+      }
+    } catch (contextError) {
+      console.error("Error getting context:", contextError);
+      // Continue without context rather than failing
+    }
+
+    // Create system prompt with context
+    const systemMessage = {
+      role: "system" as const,
+      content: `You are a helpful AI assistant. You have access to information from uploaded documents.
+
+${context ? `CONTEXT FROM DOCUMENT:
+${context}
+
+Please use this context to answer questions accurately. If the question cannot be answered from the provided context, please say so clearly.` : 'No document context available for this chat.'}
+
+Be helpful, accurate, and concise in your responses.`
+    };
+
+    // Save the user message to database
+    try {
+      await db.insert(_messages).values({
+        chatId: chatId,
+        content: lastMessage.content,
+        role: "user",
+      });
+      console.log("User message saved to database");
+    } catch (dbError) {
+      console.error("Error saving user message:", dbError);
+      // Continue with streaming even if DB save fails
+    }
+
+    // Prepare messages for the AI
+    const conversationMessages = [
+      systemMessage,
+      ...messages.filter((msg: any) => 
+        (msg.role === "user" || msg.role === "assistant") && msg.content
+      )
     ];
 
-    console.log("Starting AI stream with messages:", streamMessages.length);
+    console.log("Starting stream with", conversationMessages.length, "messages");
 
+    // Create the streaming response
     const result = await streamText({
       model: model,
-      messages: streamMessages,
+      messages: conversationMessages,
+      temperature: 0.7,
+      maxTokens: 1000,
       onFinish: async (completion) => {
-        console.log("AI response completed, saving to database");
-        await db.insert(_messages).values({
-          chatId,
-          content: completion.text,
-          role: "system",
-        });
+        console.log("Stream completed, saving AI response");
+        try {
+          await db.insert(_messages).values({
+            chatId: chatId,
+            content: completion.text,
+            role: "assistant", // Changed from "system" to "assistant"
+          });
+          console.log("AI response saved to database");
+        } catch (dbError) {
+          console.error("Error saving AI response:", dbError);
+        }
       },
     });
 
-    console.log("Returning streaming response");
+    console.log("Streaming response initiated");
     return result.toDataStreamResponse();
 
   } catch (error) {
-    console.error("Error in chat API:", error);
-    return Response.json({ 
-      error: "Internal server error", 
-    }, { status: 500 });
+    console.error("Streaming Chat API Error:", error);
+    
+    // Return detailed error in development
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+    
+    return new Response(
+      JSON.stringify({ 
+        error: "Internal server error",
+        details: errorMessage,
+        timestamp: new Date().toISOString()
+      }),
+      { 
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
   }
 }

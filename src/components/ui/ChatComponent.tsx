@@ -8,10 +8,10 @@ import MessageList from './MessageList';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 
-type Props={chatId:number}
+type Props = { chatId: number }
 
-const ChatComponent = ({chatId}:Props) => {
-  const { data } = useQuery({
+const ChatComponent = ({ chatId }: Props) => {
+  const { data, isLoading } = useQuery({
     queryKey: ["chat", chatId],
     queryFn: async () => {
       const res = await axios.post<{ messages: Message[] }>("/api/get-messages", { chatId });
@@ -19,8 +19,8 @@ const ChatComponent = ({chatId}:Props) => {
     }
   });
   
-  const {input, handleInputChange, handleSubmit, messages, error} = useChat({
-    api: "/api/chat-path",
+  const { input, handleInputChange, handleSubmit, messages, error, isLoading: isChatLoading } = useChat({
+    api: "/api/chat-path", // Your existing API endpoint
     body: {
       chatId,
     },
@@ -43,15 +43,26 @@ const ChatComponent = ({chatId}:Props) => {
         ok: response.ok,
         url: response.url
       });
+      
+      if (!response.ok) {
+        console.error("Response not OK:", response.status, response.statusText);
+      }
     },
     onFinish: (message) => {
       console.log("Chat finished:", message);
     }
-  })
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  });
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Show error if there's one
+  if (error) {
+    console.error("Chat error:", error);
+  }
 
   return (
     <div className='h-full w-full flex flex-col'>
@@ -62,25 +73,47 @@ const ChatComponent = ({chatId}:Props) => {
 
       {/* Messages Area */}
       <div className='flex-1 overflow-y-auto px-4 py-2 w-full'>
-        <MessageList messages={messages} />
-        {/* Invisible div to scroll to */}
-        <div ref={messagesEndRef} />
+        {isLoading ? (
+          <div className="flex justify-center items-center h-32">
+            <div className="text-gray-500">Loading chat history...</div>
+          </div>
+        ) : (
+          <>
+            <MessageList messages={messages} />
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4">
+                <p className="text-red-800 text-sm">
+                  Error: {error.message || "Something went wrong with the chat"}
+                </p>
+              </div>
+            )}
+            {/* Invisible div to scroll to */}
+            <div ref={messagesEndRef} />
+          </>
+        )}
       </div>
 
-      <div className="flex-shrink-0 p-4 border-t bg-white w-full !mb-4">
-        <form onSubmit={handleSubmit} className="w-full ">
+      {/* Input Area */}
+      <div className="flex-shrink-0 p-4 border-t bg-white w-full">
+        <form onSubmit={handleSubmit} className="w-full">
           <div className="flex gap-2 w-full">
             <Input
               value={input}
               onChange={handleInputChange}
               placeholder="Ask any Question..."
-              className="flex-1 min-w-0 !p-2"
+              className="flex-1 min-w-0 p-3"
+              disabled={isChatLoading}
             />
             <Button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center justify-center flex-shrink-0"
+              disabled={!input.trim() || isChatLoading}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0"
             >
-              <Send className="!w-10" />
+              {isChatLoading ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
             </Button>
           </div>
         </form>
