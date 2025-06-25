@@ -19,8 +19,8 @@ const ChatComponent = ({chatId}:Props) => {
     }
   });
   
-  const {input, handleInputChange, handleSubmit, messages, error, isLoading} = useChat({
-    api: "/api/chat",
+  const {input, handleInputChange, handleSubmit, messages, error} = useChat({
+    api: "/api/chat-path",
     body: {
       chatId,
     },
