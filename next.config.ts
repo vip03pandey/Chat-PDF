@@ -3,9 +3,13 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   experimental: {
+    appDir: true,
+    turbo: {
+      enabled: false, // 🔥 disables Turbopack, forces Webpack
+    },
     serverComponentsExternalPackages: ['pdf-parse', 'pdf2pic'],
   },
-  // Handle streaming responses
+  
   async headers() {
     return [
       {
