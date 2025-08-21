@@ -10,6 +10,14 @@ const nextConfig = {
     serverComponentsExternalPackages: ['pdf-parse', 'pdf2pic'],
   },
   
+  // Prevent build-time database calls during deployment
+  output: 'standalone',
+  
+  // Environment variables for build process
+  env: {
+    SKIP_BUILD_STATIC_GENERATION: process.env.NODE_ENV === 'production' ? 'true' : 'false',
+  },
+  
   async headers() {
     return [
       {

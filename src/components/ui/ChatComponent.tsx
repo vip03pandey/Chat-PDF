@@ -20,7 +20,7 @@ const ChatComponent = ({ chatId }: Props) => {
   });
   
   const { input, handleInputChange, handleSubmit, messages, error, isLoading: isChatLoading } = useChat({
-    api: "/api/chat-path", // Your existing API endpoint
+    api: "/api/chat-path", 
     body: {
       chatId,
     },
@@ -101,13 +101,13 @@ const ChatComponent = ({ chatId }: Props) => {
               value={input}
               onChange={handleInputChange}
               placeholder="Ask any Question..."
-              className="flex-1 min-w-0 p-3"
+              className="flex-1 min-w-0 !px-3 !py-2 !mb-2"
               disabled={isChatLoading}
             />
             <Button
               type="submit"
               disabled={!input.trim() || isChatLoading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0"
+              className="!px-4 !py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0 !min-w-2"
             >
               {isChatLoading ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
